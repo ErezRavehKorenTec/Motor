@@ -1,0 +1,208 @@
+﻿<Window x:Class="Motor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Motor"
+        xmlns:ViewModel="clr-namespace:Motor.ViewModel"
+        xmlns:Converters="clr-namespace:Motor.View"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="637">
+    <Window.DataContext>
+        <ViewModel:ViewModel/>
+    </Window.DataContext>
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources\Resources.xaml"></ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+            <Converters:InverseBoolConvertor x:Key="InverseBool"></Converters:InverseBoolConvertor>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="6*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Button 
+            Content="Connect" 
+            Grid.Row="0" 
+            Grid.Column="0" 
+            Margin="10"
+            Command="{Binding ConnectCommand}"
+            IsEnabled="{Binding IsConnectionSucceded,Converter={StaticResource InverseBool}}"></Button>
+        <Grid Grid.Row="1" 
+                Grid.Column="0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Content="Home"
+                Grid.Row="0" 
+                Grid.Column="0" 
+                Margin="5"
+                Command="{Binding MoveCommand}"
+                CommandParameter="Home"
+                IsEnabled="{Binding IsConnectionSucceded}"/>
+            <Button Grid.Row="0" 
+                Grid.Column="1" 
+                Margin="5"
+                Command="{Binding MoveCommand}"
+                CommandParameter="SeekHome"  IsEnabled="{Binding IsConnectionSucceded}">
+                <TextBlock Text="Seek Home" TextWrapping="Wrap" TextAlignment="Center"></TextBlock>
+
+            </Button>
+        </Grid>
+        <Border
+            Grid.Row="2" 
+            Grid.Column="0" 
+            Margin="10">
+            <ToggleButton 
+                Style="{StaticResource AnimatedSwitchFineCaurse}" 
+                IsChecked="{Binding FineCaurseToggleButtonState, Mode=TwoWay}"/>
+        </Border>
+        <Border
+            Grid.Row="3" 
+            Grid.Column="0" 
+            Margin="10">
+            <ToggleButton 
+                Style="{StaticResource AnimatedSwitchRelativeAbsolate}"
+                IsChecked="{Binding RelativeAbsolateToggleButtonState, Mode=TwoWay}"/>
+        </Border>
+        <Button 
+            Content="Move Up" 
+            Grid.Row="4" 
+            Grid.Column="0" 
+            Margin="10"
+            Command="{Binding MoveCommand}"
+            CommandParameter="Up"
+            IsEnabled="{Binding IsConnectionSucceded}"/>
+        <Button 
+            Content="Move Down" 
+            Grid.Row="5" 
+            Grid.Column="0" 
+            Margin="10"
+            Command="{Binding MoveCommand}"
+            CommandParameter="Down"
+            IsEnabled="{Binding IsConnectionSucceded}"/>
+        <Button 
+            Content="Disconnect" 
+            Grid.Row="0" 
+            Grid.Column="3" 
+            Margin="10"
+            Command="{Binding DisconnectCommand}"
+             IsEnabled="{Binding IsConnectionSucceded}"/>
+        <Button 
+            Content="Exit" 
+            Grid.Row="5" 
+            Grid.Column="3" 
+            Margin="10"
+            Command="{Binding ExitCommand}"/>
+        <GroupBox Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Grid.RowSpan="4" BorderBrush="Red" BorderThickness="2">
+            <GroupBox.Header>
+                <TextBlock>Log</TextBlock>
+            </GroupBox.Header>
+            <Grid>
+                <TextBlock 
+                    x:Name="Log" 
+                    Margin="5"
+                    Text="{Binding LogText,UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Grid.Row="0" Grid.Column="1" Grid.RowSpan="6" BorderBrush="Blue" BorderThickness="2">
+            <GroupBox.Header>
+                <TextBlock>Motor Preferences</TextBlock>
+            </GroupBox.Header>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="11*"/>
+                    <ColumnDefinition Width="7*"/>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="2*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Row="0" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
+                    <Label>Acceleration(ACCL)</Label>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
+                    <Label>Deceleration(DECL)</Label>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
+                    <Label>Initial Velocity(VI)</Label>
+                </Border>
+                <Border Grid.Row="3" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
+                    <Label>Maximum Velocity(VM)</Label>
+                </Border>
+                <Border Grid.Row="4" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
+                    <Label>Slew</Label>
+                </Border>
+                <Border Grid.Row="6" Grid.ColumnSpan="4" BorderThickness="1" BorderBrush="LightGray">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="6*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0">Possition</Label>
+                        <TextBlock Grid.Column="1" TextAlignment="Center" Text="{Binding PossitionString,UpdateSourceTrigger=PropertyChanged}">0</TextBlock>
+                    </Grid>
+                </Border>
+                <Border Grid.Row="7" Grid.ColumnSpan="4" BorderThickness="1" BorderBrush="LightGray">
+                    <Grid >
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="6*"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0">Error</Label>
+                        <TextBlock Grid.Column="1" Text="{Binding ErrorString,UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"></TextBlock>
+                    </Grid>
+                </Border>
+                <Border Grid.Row="0" Grid.Column="1" BorderThickness="1"  BorderBrush="LightGray">
+                    <TextBox Text="{Binding ACCLString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                </Border>
+                <Border Grid.Row="1" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray">
+                    <TextBox Text="{Binding DECLString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                </Border>
+                <Border Grid.Row="2" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray">
+                    <TextBox Text="{Binding VIString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                </Border>
+                <Border Grid.Row="3" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray">
+                    <TextBox Text="{Binding VMString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                </Border>
+                <Border Grid.Row="4" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray">
+                    <TextBox Text="{Binding SlewString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                </Border>
+                <Button Grid.Row="0" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadACCL" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="1" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadDECL" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="2" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadVI" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="3" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadVM" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="4" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadSlew" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="1" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteACCL" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="2" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteDECL" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="0" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVI" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="3" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVM" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="4" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteSlew" IsEnabled="{Binding IsConnectionSucceded}"/>
+
+            </Grid>
+        </GroupBox>
+    </Grid>
+
+</Window>
