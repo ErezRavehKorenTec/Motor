@@ -162,7 +162,7 @@
                             <ColumnDefinition Width="6*"/>
                         </Grid.ColumnDefinitions>
                         <Label Grid.Column="0">Possition</Label>
-                        <TextBlock Grid.Column="1" TextAlignment="Center" Text="{Binding PossitionString,UpdateSourceTrigger=PropertyChanged}">0</TextBlock>
+                        <TextBlock Grid.Column="1" TextAlignment="Center" Text="{Binding PossitionString,UpdateSourceTrigger=PropertyChanged}"></TextBlock>
                     </Grid>
                 </Border>
                 <Border Grid.Row="7" Grid.ColumnSpan="4" BorderThickness="1" BorderBrush="LightGray">
@@ -195,9 +195,9 @@
                 <Button Grid.Row="2" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadVI" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="3" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadVM" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="4" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadSlew" IsEnabled="{Binding IsConnectionSucceded}"/>
-                <Button Grid.Row="1" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteACCL" IsEnabled="{Binding IsConnectionSucceded}"/>
-                <Button Grid.Row="2" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteDECL" IsEnabled="{Binding IsConnectionSucceded}"/>
-                <Button Grid.Row="0" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVI" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="0" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteACCL" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="1" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteDECL" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="2" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVI" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="3" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVM" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="4" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteSlew" IsEnabled="{Binding IsConnectionSucceded}"/>
 

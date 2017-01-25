@@ -12,77 +12,75 @@ namespace Motor
 
     class MotorHandler
     {
-        public StepSize FineCaurseSelected { get; set; } = StepSize.Caurse;
-        public MovePreferences RelativeAbseluteSelected { get; set; } = MovePreferences.Relative;
         private ModbusClient _connection;
-
         private Dictionary<StepSize, int> stepSizeDictionary = new Dictionary<StepSize, int>();
 
+        public Direction LastMovementDirection { get; set; } = Direction.Positive;
+        public StepSize FineCaurseSelected { get; set; } = StepSize.Caurse;
+        public MovePreferences RelativeAbseluteSelected { get; set; } = MovePreferences.Relative;
         public ModbusClient Connection
         {
             get { return _connection; }
             set { _connection = value; }
         }
-
         public int ACCL
         {
             get
             {
-                int[] arrACCL = Connection.ReadHoldingRegisters(0, 2);
-                return (arrACCL[1] * 65536 + arrACCL[0]);
+                return (EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(0, 2)));
             }
             set
             {
-                int[] arrACCL = new int[2] { value / 65536, value % 65536 };
-                Connection.WriteMultipleRegisters(0, arrACCL);
+                Connection.WriteMultipleRegisters(0, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(value));
             }
         }
         public int DECL
         {
             get
             {
-                int[] arrDECL = Connection.ReadHoldingRegisters(24, 2);
-                return (arrDECL[1] * 65536 + arrDECL[0]);
+                return (EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(24, 2)));
             }
             set
             {
-                int[] arrDECL = new int[2] { value / 65536, value % 65536 };
-                Connection.WriteMultipleRegisters(24, arrDECL);
+                Connection.WriteMultipleRegisters(137, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(value));
             }
         }
         public int VI
         {
             get
             {
-                int[] arrVI = Connection.ReadHoldingRegisters(137, 2);// VI[1]*16^4+VI[0]
-                return (arrVI[1] * 65536 + arrVI[0]);
+                return (EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(137, 2)));
             }
             set
             {
-                int[] arrVI = new int[2] { value / 65536, value % 65536 };
-                Connection.WriteMultipleRegisters(24, arrVI);
+                Connection.WriteMultipleRegisters(24, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(value));
             }
         }
         public int VM
         {
             get
             {
-                int[] arrVM = Connection.ReadHoldingRegisters(139, 2);
-                return (arrVM[1] * 65536 + arrVM[0]);
+                return (EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(139, 2)));
             }
             set
             {
-                int[] arrVM = new int[2] { value / 65536, value % 65536 };
-                Connection.WriteMultipleRegisters(24, arrVM);
+                Connection.WriteMultipleRegisters(139, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(value));
             }
         }
 
+        public int MV //is mottor in movment
+        {
+            get
+            {
+               return Connection.ReadHoldingRegisters(74, 1)[0];
+            }
+            set{}
+        }
         //public int Slew
         //{
         //    get { }
         //    set { }
         //}
-
         public bool[] DiscreteParameter_Gates
         {
             get
@@ -93,7 +91,7 @@ namespace Motor
                  * 1-Limit-
                  * 2-Home
                  */
-                return Connection.ReadDiscreteInputs(0, 4);
+                return Connection.ReadDiscreteInputs(0, 3);
             }
             private set { }
         }
@@ -101,28 +99,19 @@ namespace Motor
         {
             get
             {
-                int[] arrPossition = Connection.ReadHoldingRegisters(87, 2);
-                return (arrPossition[1] * 65536 + arrPossition[0]);
+                return (EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(87, 2)));
             }
-            private set
-            {
-
-            }
+            private set { }
         }
-
-
-        public int[] HomeAbselutePosition { get; set; }
+        public int LastPosition { get; set; }
+        public int HomeAbselutePosition { get; set; }
         public string Error
         {
             get
             {
-                int[] arrError = Connection.ReadHoldingRegisters(33, 2);
-                return (Enum.GetName(typeof(DataErrorEnum), arrError[0]));
+                return (Enum.GetName(typeof(DataErrorEnum), EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(33, 2))));
             }
-            private set
-            {
-
-            }
+            private set { }
         }
 
 
@@ -136,10 +125,12 @@ namespace Motor
         {
             Connection.Connect(ipAddress, port);
             if (_connection.Connected)
+            {
+                LastPosition = Possition;
                 return true;
+            }
             return false;
         }
-
         public void Disconnect()
         {
             if (Connection != null && Connection.Connected)
@@ -149,20 +140,30 @@ namespace Motor
         public void SeekHome()
         {
 
-            while (!DiscreteParameter_Gates[0] || !DiscreteParameter_Gates[2]) //search for home by moving up
+            while (DiscreteParameter_Gates[0] != false && DiscreteParameter_Gates[2] != false) //search for home by moving up
             {
-                Connection.WriteMultipleRegisters(70, new int[2] { 1, 0 });
+                Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(10));
+                while (MV == 1)
+                {
+                    System.Threading.Thread.Sleep(500);
+                }
             }
-            if (!DiscreteParameter_Gates[0])// reached limit+ and didnt find home seeking down
+            if (DiscreteParameter_Gates[2] != false)// reached limit+ and didnt find home seeking down
             {
-                while (!DiscreteParameter_Gates[2])
-                    Connection.WriteMultipleRegisters(70, new int[2] { -1, 0 });
-                int[] HomeAbselutePosition = Connection.ReadHoldingRegisters(87, 2);
+                while (DiscreteParameter_Gates[2] != false)
+                {
+                    Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(-10));
+                    while (MV == 1)
+                    {
+                        System.Threading.Thread.Sleep(500);
+                    }
+                }
             }
+            HomeAbselutePosition = EasyModbus.ModbusClient.ConvertRegistersToDouble(Connection.ReadHoldingRegisters(87, 2));
         }
         public void MoveHome()
         {
-            Connection.WriteMultipleRegisters(67, new int[2] { HomeAbselutePosition[1]* 65536+ HomeAbselutePosition[0], 0 });
+            Connection.WriteMultipleRegisters(67, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(HomeAbselutePosition));
         }
         public void MoveUP()
         {
@@ -174,12 +175,36 @@ namespace Motor
                         {
                             case MovePreferences.Relative:
                                 {
-                                    Connection.WriteMultipleRegisters(70, new int[2] { stepSizeDictionary[StepSize.Fine], 0 });
+                                    Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(stepSizeDictionary[StepSize.Fine]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Negative)
+                                    //{
+                                    //    int antiBacklash = LastPosition + stepSizeDictionary[StepSize.Fine] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Positive;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             case MovePreferences.Abselute:
                                 {
-                                    Connection.WriteMultipleRegisters(67, new int[2] { stepSizeDictionary[StepSize.Fine], 0 });
+                                    Connection.WriteMultipleRegisters(67, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(stepSizeDictionary[StepSize.Fine]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Negative)
+                                    //{
+                                    //    int antiBacklash = LastPosition + stepSizeDictionary[StepSize.Fine] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Positive;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             default:
@@ -193,12 +218,36 @@ namespace Motor
                         {
                             case MovePreferences.Relative:
                                 {
-                                    Connection.WriteMultipleRegisters(70, new int[2] { stepSizeDictionary[StepSize.Caurse], 0 });
+                                    Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(stepSizeDictionary[StepSize.Caurse]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Negative)
+                                    //{
+                                    //    int antiBacklash = LastPosition +stepSizeDictionary[StepSize.Caurse] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Positive;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             case MovePreferences.Abselute:
                                 {
-                                    Connection.WriteMultipleRegisters(67, new int[2] { stepSizeDictionary[StepSize.Caurse], 0 });
+                                    Connection.WriteMultipleRegisters(67, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(stepSizeDictionary[StepSize.Caurse]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Negative)
+                                    //{
+                                    //    int antiBacklash = LastPosition + stepSizeDictionary[StepSize.Caurse] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Positive;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             default:
@@ -221,12 +270,36 @@ namespace Motor
                         {
                             case MovePreferences.Relative:
                                 {
-                                    Connection.WriteMultipleRegisters(70, new int[2] { -1*stepSizeDictionary[StepSize.Fine], 0 });
+                                    Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(-1 * stepSizeDictionary[StepSize.Fine]));
+                                    while (MV == 1)
+                                    {
+                                            System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Positive)
+                                    //{
+                                    //    int antiBacklash = LastPosition - stepSizeDictionary[StepSize.Fine] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Negative;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             case MovePreferences.Abselute:
                                 {
-                                    Connection.WriteMultipleRegisters(67, new int[2] { -1*stepSizeDictionary[StepSize.Fine], 0 });
+                                    Connection.WriteMultipleRegisters(67, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(-1 * stepSizeDictionary[StepSize.Fine]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Positive)
+                                    //{
+                                    //    int antiBacklash = LastPosition - stepSizeDictionary[StepSize.Fine] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Negative;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             default:
@@ -240,12 +313,36 @@ namespace Motor
                         {
                             case MovePreferences.Relative:
                                 {
-                                    Connection.WriteMultipleRegisters(70, new int[2] { -1*stepSizeDictionary[StepSize.Caurse], 0 });
+                                    Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(-1 * stepSizeDictionary[StepSize.Caurse]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Positive)
+                                    //{
+                                    //    int antiBacklash = LastPosition - stepSizeDictionary[StepSize.Caurse] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Negative;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             case MovePreferences.Abselute:
                                 {
-                                    Connection.WriteMultipleRegisters(67, new int[2] { -1*stepSizeDictionary[StepSize.Caurse], 0 });
+                                    Connection.WriteMultipleRegisters(67, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(-1 * stepSizeDictionary[StepSize.Caurse]));
+                                    while (MV == 1)
+                                    {
+                                        System.Threading.Thread.Sleep(500);
+                                    }
+                                    //if (LastMovementDirection == Direction.Positive)
+                                    //{
+                                    //    int antiBacklash = LastPosition - stepSizeDictionary[StepSize.Caurse] - Possition;
+                                    //    if (antiBacklash != 0)
+                                    //        Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(antiBacklash));
+                                    //    LastMovementDirection = Direction.Negative;
+                                    //}
+                                    //LastPosition = Possition;
                                     break;
                                 }
                             default:
@@ -257,8 +354,6 @@ namespace Motor
                     break;
             }
         }
-
-
     }
 }
 //int[] ACCL = _client.ReadHoldingRegisters(0, 2);// ACCL[1]*16^4+ACCL[0] - how fast move at start

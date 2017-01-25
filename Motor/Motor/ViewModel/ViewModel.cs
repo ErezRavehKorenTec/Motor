@@ -17,7 +17,6 @@ namespace Motor.ViewModel
 {
     public class ViewModel : INotifyPropertyChanged
     {
-        Timer getPositionAndError;
         private MotorHandler mh;
         public event PropertyChangedEventHandler PropertyChanged;
         private String _logString = string.Empty;
@@ -70,7 +69,6 @@ namespace Motor.ViewModel
 
             }
         }
-
         public string ACCLString { get; set; } = "1000000";
         public string DECLString { get; set; } = "1000000";
         public string VIString { get; set; } = "1000";
@@ -88,7 +86,6 @@ namespace Motor.ViewModel
             ExitCommand = new RelayCommand(Exit);
             RCommand = new RelayCommand(Read);
             WCommand = new RelayCommand(Write);
-            getPositionAndError = new Timer(new TimerCallback(ReadPositionAndError), null, 3000, 3000);
         }
 
         private void ReadPositionAndError(object state)
@@ -248,21 +245,26 @@ namespace Motor.ViewModel
                 case "SeekHome":
                     {
                         mh.SeekHome();
+                        ReadPositionAndError(null);
                         break;
                     }
                 case "Home":
                     {
                         mh.MoveHome();
+                        ReadPositionAndError(null);
                         break;
                     }
                 case "Up":
                     {
                         mh.MoveUP();
+                        ReadPositionAndError(null);
+
                         break;
                     }
                 case "Down":
                     {
                         mh.MoveDown();
+                        ReadPositionAndError(null);
                         break;
                     }
                 default:

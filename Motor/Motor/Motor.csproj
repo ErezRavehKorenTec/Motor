@@ -60,6 +60,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Enums\DirectionEnum.cs" />
     <Compile Include="MotorHandler.cs" />
     <Compile Include="RelayCommands\RelayCommand.cs" />
     <Compile Include="ViewModel\ViewModel.cs" />
