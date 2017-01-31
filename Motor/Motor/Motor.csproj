@@ -61,9 +61,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Enums\DirectionEnum.cs" />
-    <Compile Include="MotorHandler.cs" />
+    <Compile Include="FOA.cs" />
+    <Compile Include="FOABase.cs" />
+    <Compile Include="MotorHandlerModbus.cs" />
     <Compile Include="RelayCommands\RelayCommand.cs" />
+    <Compile Include="IFOA.cs" />
     <Compile Include="ViewModel\ViewModel.cs" />
+    <Compile Include="ViewModel\ViewModelMcode.cs" />
     <Compile Include="View\Converter\InverseBoolConvertor.cs" />
     <Compile Include="View\MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>

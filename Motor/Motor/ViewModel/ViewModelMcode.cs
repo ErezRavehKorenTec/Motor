@@ -1,23 +1,18 @@
-﻿using System;
+﻿using Motor.RelayCommands;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using Motor.RelayCommands;
-using System.ComponentModel;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
 using System.Windows;
-using EasyModbus;
-using Motor.Enums;
+using System.Windows.Input;
 
 namespace Motor.ViewModel
 {
-    public class ViewModel : INotifyPropertyChanged
+    public class ViewModelMcode : INotifyPropertyChanged
     {
-        private MotorHandlerModbus mh;
+        private FOA mh;
         public event PropertyChangedEventHandler PropertyChanged;
         private String _logString = string.Empty;
 
@@ -44,11 +39,6 @@ namespace Motor.ViewModel
             set
             {
                 _fineCaurseState = value;
-                if (_fineCaurseState == false)
-                    mh.FineCaurseSelected = StepSize.Caurse;
-                else
-                    mh.FineCaurseSelected = StepSize.Fine;
-
             }
         }
 
@@ -62,11 +52,6 @@ namespace Motor.ViewModel
             set
             {
                 _relativeAbsolateState = value;
-                if (_relativeAbsolateState == false)
-                    mh.RelativeAbseluteSelected = MovePreferences.Relative;
-                else
-                    mh.RelativeAbseluteSelected = MovePreferences.Abselute;
-
             }
         }
         public string ACCLString { get; set; } = "1000000";
@@ -77,9 +62,9 @@ namespace Motor.ViewModel
         public string PossitionString { get; set; } = "0";
         public string ErrorString { get; set; } = "No Error";
         #region Ctor
-        public ViewModel()
+        public ViewModelMcode()
         {
-            mh = new MotorHandlerModbus();
+            mh = new FOA("192.168.1.253");
             ConnectCommand = new RelayCommand(Connect);
             DisconnectCommand = new RelayCommand(Disconnect);
             MoveCommand = new RelayCommand(Move);
@@ -92,8 +77,8 @@ namespace Motor.ViewModel
         {
             if (mh.Connection.Connected)
             {
-                PossitionString = mh.Possition.ToString();
-                ErrorString = mh.Error;
+                PossitionString = mh.GetPosition().ToString();
+                ErrorString = mh.GetError().ToString();
                 OnPropertyChange("PossitionString");
                 OnPropertyChange("ErrorString");
             }
@@ -154,7 +139,7 @@ namespace Motor.ViewModel
                     {
                         int value = 0;
                         if (int.TryParse(ACCLString, out value))
-                            mh.ACCL = value;
+                            mh.SetAcceleration(value);
                         else
                             LogText = "bad ACCL value";
                         break;
@@ -163,7 +148,7 @@ namespace Motor.ViewModel
                     {
                         int value = 0;
                         if (int.TryParse(DECLString, out value))
-                            mh.DECL = value;
+                            mh.SetDeceleration(value);
                         else
                             LogText = "bad DECL value";
                         break;
@@ -172,7 +157,7 @@ namespace Motor.ViewModel
                     {
                         int value = 0;
                         if (int.TryParse(VIString, out value))
-                            mh.VI = value;
+                            mh.SetVI(value);
                         else
                             LogText = "bad VI value";
                         break;
@@ -181,7 +166,7 @@ namespace Motor.ViewModel
                     {
                         int value = 0;
                         if (int.TryParse(VMString, out value))
-                            mh.VM = value;
+                            mh.SetVM(value);
                         else
                             LogText = "bad VM value";
                         break;
@@ -200,31 +185,36 @@ namespace Motor.ViewModel
             {
                 case "ReadACCL":
                     {
-                        ACCLString = mh.ACCL.ToString();
+                        ACCLString = mh.GetAcceleration().ToString();
                         OnPropertyChange("ACCLString");
                         break;
                     }
                 case "ReadDECL":
                     {
-                        DECLString = mh.DECL.ToString();
+                        DECLString = mh.GetDecelerationn().ToString();
                         OnPropertyChange("DECLString");
                         break;
                     }
                 case "ReadVI":
                     {
-                        VIString = mh.VI.ToString();
+                        VIString = mh.GetVI().ToString();
                         OnPropertyChange("VIString");
                         break;
                     }
                 case "ReadVM":
                     {
-                        VMString = mh.VM.ToString();
+                        VMString = mh.GetVM().ToString();
                         OnPropertyChange("VMString");
                         break;
                     }
                 case "ReadSlew":
                     {
                         //value = mh.ReadSlew;
+                        break;
+                    }
+                case "ReadERAndP":
+                    {
+                        ReadPositionAndError(null);
                         break;
                     }
                 default:
@@ -250,21 +240,45 @@ namespace Motor.ViewModel
                     }
                 case "Home":
                     {
-                        //mh.MoveHome();
-                        //ReadPositionAndError(null);
-                        var x = mh.DiscreteParameter_Gates;
+                        mh.MoveHome();
+                        ReadPositionAndError(null);
                         break;
                     }
                 case "Up":
                     {
-                        mh.MoveUP();
+                        if (!RelativeAbsolateToggleButtonState)
+                        {
+                            if (FineCaurseToggleButtonState)
+                                mh.MoveRelative(Enums.Direction.Positive, Enums.StepSize.Fine);
+                            else
+                                mh.MoveRelative(Enums.Direction.Positive, Enums.StepSize.Caurse);
+                        }
+                        else
+                        {
+                            if (FineCaurseToggleButtonState)
+                                mh.MoveAbsolute(Enums.Direction.Positive, Enums.StepSize.Fine);
+                            else
+                                mh.MoveAbsolute(Enums.Direction.Positive, Enums.StepSize.Caurse);
+                        }
                         ReadPositionAndError(null);
-
                         break;
                     }
                 case "Down":
                     {
-                        mh.MoveDown();
+                        if (!RelativeAbsolateToggleButtonState)
+                        {
+                            if (FineCaurseToggleButtonState)
+                                mh.MoveRelative(Enums.Direction.Negative, Enums.StepSize.Fine);
+                            else
+                                mh.MoveRelative(Enums.Direction.Negative, Enums.StepSize.Caurse);
+                        }
+                        else
+                        {
+                            if (FineCaurseToggleButtonState)
+                                mh.MoveAbsolute(Enums.Direction.Negative, Enums.StepSize.Fine);
+                            else
+                                mh.MoveAbsolute(Enums.Direction.Negative, Enums.StepSize.Caurse);
+                        }
                         ReadPositionAndError(null);
                         break;
                     }
@@ -276,43 +290,15 @@ namespace Motor.ViewModel
         private void Disconnect(object obj)
         {
             if (mh != null && mh.Connection.Connected)
-                mh.Disconnect();
+                mh.Discconect();
             IsConnectionSucceded = false;
             OnPropertyChange("IsConnectionSucceded");
         }
 
         private void Connect(object obj)
         {
-            IsConnectionSucceded = mh.Connect("192.168.1.253", 502);
+            IsConnectionSucceded = mh.InitFOAConnection("192.168.1.253");
             OnPropertyChange("IsConnectionSucceded");
-            /*
-             * Discrete input
-             * 0-Limit+
-             * 1-Limit-
-             * 2-Home
-             * 
-             */
-            //_client = new ModbusClient();
-            //_client.Connect("192.168.1.253", 502);
-            //if (_client.Connected)
-            //bool[] currentGate = _client.ReadDiscreteInputs(0, 4);
-            //int[] ACCL = _client.ReadHoldingRegisters(0, 2);// ACCL[1]*16^4+ACCL[0] - how fast move at start
-            //_client.WriteMultipleRegisters(0, new int[2] { 34464, 1 }); //100000= 16^4*1+34464
-            //int[] DECL = _client.ReadHoldingRegisters(24, 2);// DECL[1]*16^4+DECL[0] - how fast to move at end
-            //_client.WriteMultipleRegisters(24, new int[2] { 34464, 1 }); //100000= 16^4*1+34464
-            //int[] VI = _client.ReadHoldingRegisters(137, 2);// VI[1]*16^4+VI[0]
-            //int[] VM = _client.ReadHoldingRegisters(139, 2);//?
-            //int[] MV = _client.ReadHoldingRegisters(77, 1);
-            //int[] Position = _client.ReadHoldingRegisters(87, 2);// Position[1]*16^4+Position[0]
-            //int[] V = _client.ReadHoldingRegisters(133, 2);
-            //int[] Error = _client.ReadHoldingRegisters(33, 2);
-            //Enum.Parse(typeof(DataErrorEnum), Error[0].ToString());
-
-            //_client.WriteMultipleRegisters(67, new int[2] { 50000, 0 });//Move Absolute
-            //_client.WriteMultipleRegisters(70, new int[2] { 50000, 0 });//Move Relative
-            //_client.WriteMultipleRegisters(70, new int[2] { 50000, 0 });//Move Relative
-            //_client.WriteMultipleRegisters(70, new int[2] { 50000, 0 });//Move Relative
-            //int[] Position1 = _client.ReadHoldingRegisters(87, 2);// Position[1]*16^4+Position[0]
         }
         public string LogText
         {

@@ -9,7 +9,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="637">
     <Window.DataContext>
-        <ViewModel:ViewModel/>
+        <ViewModel:ViewModelMcode/>
     </Window.DataContext>
     <Window.Resources>
         <ResourceDictionary>
@@ -152,7 +152,7 @@
                 <Border Grid.Row="3" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
                     <Label>Maximum Velocity(VM)</Label>
                 </Border>
-                <Border Grid.Row="4" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray">
+                <Border Grid.Row="4" Grid.Column="0" BorderThickness="1" BorderBrush="LightGray" Visibility="Hidden">
                     <Label>Slew</Label>
                 </Border>
                 <Border Grid.Row="6" Grid.ColumnSpan="4" BorderThickness="1" BorderBrush="LightGray">
@@ -187,19 +187,20 @@
                 <Border Grid.Row="3" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray">
                     <TextBox Text="{Binding VMString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
                 </Border>
-                <Border Grid.Row="4" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray">
-                    <TextBox Text="{Binding SlewString,UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                <Border Grid.Row="4" Grid.Column="1" BorderThickness="1" BorderBrush="LightGray" Visibility="Hidden">
+                    <TextBox Text="{Binding SlewString,UpdateSourceTrigger=PropertyChanged}" Visibility="Hidden"></TextBox>
                 </Border>
                 <Button Grid.Row="0" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadACCL" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="1" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadDECL" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="2" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadVI" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="3" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadVM" IsEnabled="{Binding IsConnectionSucceded}"/>
-                <Button Grid.Row="4" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadSlew" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="4" Grid.Column="2" Content="R" Command="{Binding RCommand}" CommandParameter="ReadSlew" IsEnabled="{Binding IsConnectionSucceded}" Visibility="Hidden"/>
                 <Button Grid.Row="0" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteACCL" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="1" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteDECL" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="2" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVI" IsEnabled="{Binding IsConnectionSucceded}"/>
                 <Button Grid.Row="3" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteVM" IsEnabled="{Binding IsConnectionSucceded}"/>
-                <Button Grid.Row="4" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteSlew" IsEnabled="{Binding IsConnectionSucceded}"/>
+                <Button Grid.Row="4" Grid.Column="3" Content="W" Command="{Binding WCommand}" CommandParameter="WriteSlew" IsEnabled="{Binding IsConnectionSucceded}" Visibility="Hidden"/>
+                <Button Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" Content="Read Error and Possition" Command="{Binding RCommand}" CommandParameter="ReadERAndP" IsEnabled="{Binding IsConnectionSucceded}" />
 
             </Grid>
         </GroupBox>

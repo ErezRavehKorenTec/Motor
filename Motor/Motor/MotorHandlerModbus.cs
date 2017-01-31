@@ -10,11 +10,10 @@ using System.Threading.Tasks;
 namespace Motor
 {
 
-    class MotorHandler
+    class MotorHandlerModbus
     {
         private ModbusClient _connection;
         private Dictionary<StepSize, int> stepSizeDictionary = new Dictionary<StepSize, int>();
-
         public Direction LastMovementDirection { get; set; } = Direction.Positive;
         public StepSize FineCaurseSelected { get; set; } = StepSize.Caurse;
         public MovePreferences RelativeAbseluteSelected { get; set; } = MovePreferences.Relative;
@@ -67,14 +66,13 @@ namespace Motor
                 Connection.WriteMultipleRegisters(139, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(value));
             }
         }
-
         public int MV //is mottor in movment
         {
             get
             {
-               return Connection.ReadHoldingRegisters(74, 1)[0];
+                return Connection.ReadHoldingRegisters(74, 1)[0];
             }
-            set{}
+            set { }
         }
         //public int Slew
         //{
@@ -103,7 +101,7 @@ namespace Motor
             }
             private set { }
         }
-        public int LastPosition { get; set; }
+        //public int LastPosition { get; set; }
         public int HomeAbselutePosition { get; set; }
         public string Error
         {
@@ -113,23 +111,48 @@ namespace Motor
             }
             private set { }
         }
+        public bool LimitPlusReached { get; private set; }
+        public bool LimitMinusReached { get; private set; }
 
-
-        public MotorHandler()
+        public MotorHandlerModbus()
         {
             Connection = new ModbusClient();
             stepSizeDictionary.Add(StepSize.Fine, int.Parse(ConfigurationManager.AppSettings["FineValue"]));
             stepSizeDictionary.Add(StepSize.Caurse, int.Parse(ConfigurationManager.AppSettings["CaurseValue"]));
+            Task aa = Task.Factory.StartNew(MonitorBoolArray);
         }
         public bool Connect(string ipAddress, int port)
         {
             Connection.Connect(ipAddress, port);
             if (_connection.Connected)
             {
-                LastPosition = Possition;
+                //Connection.receiveDataChanged += Connection_receiveDataChanged;
+                //LastPosition = Possition;
                 return true;
             }
             return false;
+        }
+
+        private void MonitorBoolArray()
+        {
+            //DiscreteParameter_Gates.Contains(true);
+            while (true)
+            {
+                if (Connection.Connected == false) continue;
+                bool[] x = DiscreteParameter_Gates;
+                if (!x[0])
+                {
+                    LimitPlusReached = true;
+                }
+                else if(!x[1])
+                {
+                    LimitMinusReached = true;
+                }
+                else
+                {
+                    LimitMinusReached = LimitPlusReached = false;
+                }
+            }
         }
         public void Disconnect()
         {
@@ -139,7 +162,6 @@ namespace Motor
 
         public void SeekHome()
         {
-
             while (DiscreteParameter_Gates[0] != false && DiscreteParameter_Gates[2] != false) //search for home by moving up
             {
                 Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(10));
@@ -167,6 +189,7 @@ namespace Motor
         }
         public void MoveUP()
         {
+            if (LimitPlusReached) return;
             switch (FineCaurseSelected)
             {
                 case StepSize.Fine:
@@ -259,9 +282,9 @@ namespace Motor
                     break;
             }
         }
-
         public void MoveDown()
         {
+            if (LimitMinusReached) return;
             switch (FineCaurseSelected)
             {
                 case StepSize.Fine:
@@ -273,7 +296,7 @@ namespace Motor
                                     Connection.WriteMultipleRegisters(70, EasyModbus.ModbusClient.ConvertDoubleToTwoRegisters(-1 * stepSizeDictionary[StepSize.Fine]));
                                     while (MV == 1)
                                     {
-                                            System.Threading.Thread.Sleep(500);
+                                        System.Threading.Thread.Sleep(500);
                                     }
                                     //if (LastMovementDirection == Direction.Positive)
                                     //{
@@ -292,6 +315,7 @@ namespace Motor
                                     {
                                         System.Threading.Thread.Sleep(500);
                                     }
+
                                     //if (LastMovementDirection == Direction.Positive)
                                     //{
                                     //    int antiBacklash = LastPosition - stepSizeDictionary[StepSize.Fine] - Possition;
@@ -356,14 +380,3 @@ namespace Motor
         }
     }
 }
-//int[] ACCL = _client.ReadHoldingRegisters(0, 2);// ACCL[1]*16^4+ACCL[0] - how fast move at start
-//_client.WriteMultipleRegisters(0, new int[2] { 34464, 1 }); //100000= 16^4*1+34464
-//int[] DECL = _client.ReadHoldingRegisters(24, 2);// DECL[1]*16^4+DECL[0] - how fast to move at end
-//_client.WriteMultipleRegisters(24, new int[2] { 34464, 1 }); //100000= 16^4*1+34464
-//int[] VI = _client.ReadHoldingRegisters(137, 2);// VI[1]*16^4+VI[0]
-//int[] VM = _client.ReadHoldingRegisters(139, 2);//?
-//int[] MV = _client.ReadHoldingRegisters(77, 1);
-//int[] Position = _client.ReadHoldingRegisters(87, 2);// Position[1]*16^4+Position[0]
-//int[] V = _client.ReadHoldingRegisters(133, 2);
-//int[] Error = _client.ReadHoldingRegisters(33, 2);
-//Enum.Parse(typeof(DataErrorEnum), Error[0].ToString());

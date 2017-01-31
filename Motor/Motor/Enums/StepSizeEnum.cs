@@ -8,7 +8,7 @@ namespace Motor.Enums
 {
     public enum StepSize
     {
-        Fine,
-        Caurse
+        Fine=50000,
+        Caurse=100000
     }
 }
