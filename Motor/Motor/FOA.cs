@@ -28,6 +28,8 @@ namespace Motor
             set { _mv = value; }
         }
 
+        public int MaintenancePosition { get; private set; }
+
         private static volatile int dldnow;
         private static Timer _MVTimer;
 
@@ -51,14 +53,18 @@ namespace Motor
         {
             try
             {
+
                 IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(address), 503);
                 Connection = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 Connection.Connect(endpoint);
-                InitialMotorParams();//if success write init successful
+                if (!InitialMotorParams())
+                    return false;//if success write init successful
+                //var position = GetPosition();
                 SetErrorMessageToZero();
                 WriteMotorSpecToLog();
-                //_MVTimer = new Timer(new TimerCallback(GetVMByTime), dldnow,100,100);
-                
+                GetMaintenancePosition();//Get maintenance position from DB/Configuration
+                //_MVTimer = new Timer(new TimerCallback(GetMVByTime), dldnow,100,100);
+
                 return true;
             }
             catch (Exception)
@@ -72,7 +78,7 @@ namespace Motor
             Connection.Send(Encoding.ASCII.GetBytes(SET_ERROR_TO_ZERO));
         }
 
-        private void GetVMByTime(object state)
+        private void GetMVByTime(object state)
         {
             _MVTimer.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
             GetMV();
@@ -211,6 +217,18 @@ namespace Motor
             Connection.Receive(buffer);
             MV= double.Parse(Encoding.ASCII.GetString(buffer));
             return MV;
+        }
+
+        public override void GetMaintenancePosition()
+        {
+            //Get Maintenance position from DB/Configuration
+            MaintenancePosition = 150000;
+        }
+
+        public override void GotoMaintenance()
+        {
+            string _moveToMaintenance = MOVE_ABSOLUTE.Replace("?", MaintenancePosition.ToString());
+            Connection.Send(Encoding.ASCII.GetBytes(_moveToMaintenance));
         }
     }
 }

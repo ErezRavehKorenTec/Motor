@@ -36,5 +36,8 @@ namespace Motor
         abstract public void SetEncoderEnable(bool isenable);
         abstract public double GetError();
         abstract public double GetMV();
+        abstract public void GetMaintenancePosition();
+
+        abstract public void GotoMaintenance();
     }
 }

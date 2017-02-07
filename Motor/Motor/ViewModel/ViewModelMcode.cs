@@ -16,6 +16,15 @@ namespace Motor.ViewModel
         public event PropertyChangedEventHandler PropertyChanged;
         private String _logString = string.Empty;
 
+
+
+        private bool _isHomeSeek = false;
+        public bool IsHomeSeek
+        {
+            get { return _isHomeSeek; }
+            set { _isHomeSeek = value; }
+        }
+
         private bool _isConnectionSucceded = false;
         public bool IsConnectionSucceded
         {
@@ -130,7 +139,6 @@ namespace Motor.ViewModel
         }
         #endregion
 
-
         private void Write(object obj)
         {
             switch ((string)obj)
@@ -179,6 +187,7 @@ namespace Motor.ViewModel
                     break;
             }
         }
+
         private void Read(object obj)
         {
             switch ((string)obj)
@@ -217,6 +226,11 @@ namespace Motor.ViewModel
                         ReadPositionAndError(null);
                         break;
                     }
+                case "GotoMainatince":
+                    {
+                        mh.GotoMaintenance();
+                        break;
+                    }
                 default:
                     break;
             }
@@ -227,7 +241,6 @@ namespace Motor.ViewModel
             Disconnect(null);
             Application.Current.MainWindow.Close();
         }
-
         private void Move(object obj)
         {
             switch ((string)obj)
@@ -236,6 +249,8 @@ namespace Motor.ViewModel
                     {
                         mh.SeekHome();
                         ReadPositionAndError(null);
+                        IsHomeSeek = true;
+                        OnPropertyChange("IsHomeSeek");
                         break;
                     }
                 case "Home":
